@@ -1,0 +1,42 @@
+# GPU build of onnxruntime, plus the pip-installable CUDA runtime
+# libraries it needs at load time (no system-wide CUDA Toolkit install
+# needed inside the image - the HOST still needs an NVIDIA driver +
+# nvidia-container-toolkit, and `docker run`/compose needs GPU
+# passthrough). Falls back to CPU automatically at runtime (see
+# nsfw_model.py) if these aren't usable for any reason.
+#
+# IMPORTANT: onnxruntime-gpu==1.18.1's DEFAULT PyPI wheel is built
+# against CUDA 11 (it dlopen's libcublasLt.so.11 and wants cuDNN 8.x) -
+# NOT CUDA 12, even though CUDA 12 is newer/more common now. Pairing it
+# with nvidia-*-cu12 packages (what an earlier version of this file
+# had) causes exactly this failure at startup:
+#   Failed to load library libonnxruntime_providers_cuda.so with
+#   error: libcublasLt.so.11: cannot open shared object file
+# followed by a silent fallback to CPU. The nvidia-*-cu11 packages
+# below match what this onnxruntime-gpu build actually expects. This
+# is a real, well-documented mismatch upstream (see
+# https://github.com/microsoft/onnxruntime/issues/21684) - it's not
+# about your host's actual CUDA Toolkit version, since these pip
+# packages are self-contained runtime libs bundled INTO the image;
+# only your host's NVIDIA driver version matters, and drivers are
+# backward compatible across CUDA minor versions.
+# NOTE: nvidia-cudnn-cu11 is pinned - leaving it unpinned resolved to
+# a cuDNN 9.x build (libcudnn.so.9) despite the "-cu11" package name,
+# which onnxruntime-gpu 1.18.1's CUDA-11 build can't use (it wants
+# cuDNN 8.9.2 specifically, per onnxruntime's own release notes).
+# Confirmed via a build-time diagnostic that dumped the actual .so
+# files installed - don't unpin this without re-checking that.
+onnxruntime-gpu==1.18.1
+nvidia-cuda-runtime-cu11
+nvidia-cudnn-cu11==8.9.2.26
+nvidia-cublas-cu11
+nvidia-cufft-cu11
+nvidia-curand-cu11
+nvidia-cusolver-cu11
+nvidia-cusparse-cu11
+opencv-python-headless==4.10.0.84
+numpy<2
+pillow==10.4.0
+nudenet==3.4.2
+PyGObject==3.48.2
+pydbus==0.6.0

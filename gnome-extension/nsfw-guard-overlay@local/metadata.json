@@ -1,0 +1,7 @@
+{
+    "uuid": "nsfw-guard-overlay@local",
+    "name": "NSFW Guard Overlay",
+    "description": "Dumb overlay renderer for nsfw-guard: draws or clears black rectangles at coordinates received over a local Unix socket. No detection logic lives here - see the nsfw-guard container for that.",
+    "shell-version": ["45", "46", "47", "48", "49", "50"],
+    "url": ""
+}
