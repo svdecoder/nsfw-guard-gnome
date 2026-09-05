@@ -1,0 +1,13 @@
+[Unit]
+Description=NSFW Guard Watchdog B — monitors guard service and watchdog A
+After=nsfw-guard.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'while true; do systemctl --user is-active --quiet nsfw-guard.service || { echo "watchdog-b: restarting nsfw-guard"; systemctl --user restart nsfw-guard.service; }; systemctl --user is-active --quiet nsfw-guard-watchdog-a.service || { echo "watchdog-b: restarting watchdog-a"; systemctl --user restart nsfw-guard-watchdog-a.service; }; sleep 15; done'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

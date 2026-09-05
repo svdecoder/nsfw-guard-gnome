@@ -3,34 +3,21 @@ services:
     build: .
     image: nsfw-guard:dev
     network_mode: "none"
-    # Logging out kills the session/portal the container is talking to,
-    # so the process will error out shortly after triggering a logout -
-    # this brings it back up automatically once you log back in and the
-    # bus/portal are available again.
-    restart: unless-stopped
+    # Systemd's nsfw-guard.service is responsible for restarting the
+    # container — it runs `docker compose up` in the foreground and
+    # Restart=always kicks in when the container exits.
+    restart: "no"
     environment:
       - XDG_RUNTIME_DIR=/run/user/${UID}
       - XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}
-      # Every line below is ALWAYS active (not commented out) - the
-      # ${VAR:-default} syntax means "use VAR from .env if it's set
-      # there, otherwise fall back to the default after the colon".
-      # So to change any of these, add/edit the line in .env - you
-      # don't need to touch this file at all. Full list of what each
-      # one does is in app/main.py's docstring.
-      - CAPTURE_MODE=${CAPTURE_MODE:-monitor}
-      - PEEK_INTERVAL_S=${PEEK_INTERVAL_S:-0.15}
-      - PEEK_SETTLE_S=${PEEK_SETTLE_S:-0.02}
-      - EXIT_DEBOUNCE_FRAMES=${EXIT_DEBOUNCE_FRAMES:-2}
-      - WIDE_CHECK_INTERVAL_S=${WIDE_CHECK_INTERVAL_S:-10.0}
-      - ALERT_PEEK_INTERVAL_S=${ALERT_PEEK_INTERVAL_S:-0.3}
-      - HYBRID_WINDOW_STREAM_INDEX=${HYBRID_WINDOW_STREAM_INDEX:-}
+      # ${VAR:-default} syntax: use VAR from .env if set, otherwise
+      # fall back to the default after the colon.
       - MODEL_PATH=${MODEL_PATH:-/app/models/640m.onnx}
       - USE_GPU=${USE_GPU:-true}
       - IDLE_INTERVAL_S=${IDLE_INTERVAL_S:-0}
-      - ACTIVE_INTERVAL_S=${ACTIVE_INTERVAL_S:-0}
       - CONFIRM_FRAMES=${CONFIRM_FRAMES:-1}
-      - DEBUG_SNAPSHOT_DIR=${DEBUG_SNAPSHOT_DIR:-}
-      - ACTION_MODE=${ACTION_MODE:-logout}
+      - ENTER_THRESHOLD=${ENTER_THRESHOLD:-0.45}
+      - WARN_GRACE_S=${WARN_GRACE_S:-5.0}
       - GUARD_ACTIVE_START_HOUR=${GUARD_ACTIVE_START_HOUR:-22}
       - GUARD_ACTIVE_END_HOUR=${GUARD_ACTIVE_END_HOUR:-7}
       - WINDOW_CHECK_INTERVAL_S=${WINDOW_CHECK_INTERVAL_S:-30.0}
@@ -39,11 +26,8 @@ services:
       - ${NSFW_GUARD_DATA_DIR}:/data
       - ./models:/app/models:ro
     # GPU passthrough (only relevant if USE_GPU=true, requires
-    # nvidia-container-toolkit installed on the host - see README).
-    # Remove this whole "deploy" block if you don't have an NVIDIA GPU;
-    # the app already falls back to CPU automatically either way, this
-    # block just controls whether the GPU is passed into the container
-    # at all.
+    # nvidia-container-toolkit installed on the host — see README).
+    # Remove this whole "deploy" block if you don't have an NVIDIA GPU.
     deploy:
       resources:
         reservations:

@@ -71,7 +71,5 @@ USER nsfwguard
 
 COPY --chown=nsfwguard:nsfwguard app/ .
 
-# Default entrypoint: live monitoring loop (Phase 2).
-# For phase-1-style static image testing, override with:
-#   docker run ... nsfw-guard python detect.py
+# Default entrypoint: live monitoring loop (logout-only).
 ENTRYPOINT ["python", "main.py"]

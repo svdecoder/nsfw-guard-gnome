@@ -5,8 +5,6 @@ Design goal: near-zero false positives. We do this by:
   1. Only reacting to a small allowlist of "unambiguous" explicit classes,
      ignoring borderline/covered/ambiguous classes entirely.
   2. Requiring a high confidence threshold for those classes.
-  3. Exposing a lower "sustain" threshold used only once we're already
-     in ACTIVE state (hysteresis - implemented in the state machine, not here).
 """
 
 import os
@@ -53,22 +51,19 @@ class NsfwModel:
     ):
         """
         high_conf_threshold: minimum confidence for a TRIGGER_LABELS hit
-                              to count at all. This is the ENTER threshold.
-                              The state machine applies a separate, lower
-                              SUSTAIN threshold once already active.
+                              to count at all.
 
         NOTE on this number: 0.75 (the original guess) was far too
         conservative against real images - genuine EXPOSED-class hits
         on actual explicit content commonly score in the 0.4-0.7 range
-        with this model (see debug_raw.py output from real test runs).
-        0.45 is a starting point based on that data, not a guarantee -
-        keep validating against your own test set as you go.
+        with this model. 0.45 is a starting point based on that data,
+        not a guarantee - keep validating against your own test set as
+        you go.
 
         model_path: path to the larger, more accurate 640m model (640x640,
                     yolov8m-based). This catches smaller/harder regions
                     (e.g. ANUS_EXPOSED, distant subjects) that the smaller
-                    default 320n model misses entirely - see the
-                    false-negative debugging that led to this change.
+                    default 320n model misses entirely.
                     Must be downloaded manually and bind-mounted in at
                     runtime (see README.md "Getting the 640m model") -
                     GitHub gates this specific release asset behind a
@@ -184,14 +179,3 @@ class NsfwModel:
             x, y, w, h = item["box"]
             results.append(Detection(label=label, score=score, box=(x, y, w, h)))
         return results
-
-    def analyze_raw(self, image_path_or_array) -> list[dict]:
-        """
-        Debug helper: returns EVERY raw detection from the model,
-        completely unfiltered - no label allowlist, no threshold.
-        Use this to diagnose false negatives (is the model seeing
-        anything at all? what labels/scores is it actually producing?).
-        """
-        if isinstance(image_path_or_array, np.ndarray):
-            image_path_or_array = image_path_or_array[:, :, ::-1]
-        return self.detector.detect(image_path_or_array)

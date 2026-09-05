@@ -1,0 +1,19 @@
+[Unit]
+Description=NSFW Guard — screen content monitoring and session protection
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=__PROJECT_DIR__
+ExecStartPre=/bin/sleep 5
+ExecStart=__PROJECT_DIR__/systemd/run-guard.sh
+ExecStop=/usr/bin/docker compose -f __PROJECT_DIR__/docker-compose.yml down --timeout 10
+Restart=always
+RestartSec=10
+TimeoutStartSec=60
+StartLimitIntervalSec=30
+StartLimitBurst=3
+
+[Install]
+WantedBy=graphical-session.target

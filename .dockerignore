@@ -1,0 +1,16 @@
+# Git / VCS
+.git
+.gitignore
+
+# Environment
+.env
+.env.example
+
+# Python
+__pycache__
+*.pyc
+test_state_machine.py
+
+# Project-local runtime artifacts
+systemd/
+*.md

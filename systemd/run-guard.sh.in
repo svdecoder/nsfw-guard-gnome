@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_DIR"
+
+# Run docker compose in the foreground so systemd can monitor
+# the process. Restart=always brings it back on exit.
+exec /usr/bin/docker compose -f "$PROJECT_DIR/docker-compose.yml" up --build
